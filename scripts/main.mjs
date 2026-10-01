@@ -94,6 +94,11 @@ Hooks.once("init", () => {
 Hooks.on("renderSettingsConfig", (app, html) => {
   const root = html instanceof HTMLElement ? html : (app.element ?? html?.[0]);
   if (!root?.querySelector) return;
+  // GM only: players do not see our settings at all.
+  if (!game.user?.isGM) {
+    root.querySelectorAll(`[data-tab="${ID}"], [data-setting-id^="${ID}."]`).forEach((el) => el.remove());
+    return;
+  }
   const panel = installPanel(root, {
     doc: document,
     localize: (key) => game.i18n.localize(key),
@@ -130,5 +135,6 @@ Hooks.once("ready", () => {
     onState
   });
   game.modules.get(ID).api.link = link;
-  if (game.settings.get(ID, "enabled")) link.start();
+  // GM only: never connect a player's browser, even if an old setting is on.
+  if (game.user?.isGM && game.settings.get(ID, "enabled")) link.start();
 });
